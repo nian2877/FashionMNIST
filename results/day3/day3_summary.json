@@ -1,0 +1,35 @@
+{
+  "config": {
+    "batch_size": 64,
+    "epochs": 5,
+    "learning_rate": 0.001,
+    "mlp_hidden_dim": 256,
+    "run_baseline_mlp": true
+  },
+  "final_metrics": {
+    "mlp": {
+      "train_loss": 0.29819471849600476,
+      "train_acc": 0.89145,
+      "test_loss": 0.3562459403753281,
+      "test_acc": 0.8724,
+      "parameters": 203530
+    },
+    "cnn": {
+      "train_loss": 0.23269977096716563,
+      "train_acc": 0.9141166666666667,
+      "test_loss": 0.27564117660522464,
+      "test_acc": 0.8989,
+      "parameters": 206922
+    }
+  },
+  "artifacts": {
+    "mlp": {
+      "history_json": "results\\day3\\mlp_history.json",
+      "weights_path": "results\\day3\\mlp_weights.pt"
+    },
+    "cnn": {
+      "history_json": "results\\day3\\cnn_history.json",
+      "weights_path": "results\\day3\\cnn_weights.pt"
+    }
+  }
+}

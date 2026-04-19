@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "baseline",
+    "category": "baseline",
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "dropout": 0.0,
+    "epochs": 3,
+    "note": "Baseline CNN configuration used as the reference point."
+  },
+  "final_metrics": {
+    "train_loss": 0.4375131437778473,
+    "train_acc": 0.84,
+    "test_loss": 0.4499375723600388,
+    "test_acc": 0.838,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\baseline\\history.json",
+    "curves_png": "results\\day4\\baseline\\curves.png",
+    "weights_path": "results\\day4\\baseline\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\baseline\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\baseline\\misclassified_examples.png"
+  }
+}

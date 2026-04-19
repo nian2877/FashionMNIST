@@ -184,11 +184,28 @@ def load_fashion_mnist_tensors(root: str | Path = "data"):
 def make_fashion_mnist_dataloaders(
     batch_size: int,
     root: str | Path = "data",
+    train_limit: int | None = None,
+    test_limit: int | None = None,
+    subset_seed: int = 42,
 ):
     """Create train/test DataLoaders for FashionMNIST."""
-    _, DataLoader, TensorDataset = _import_torch()
+    torch, DataLoader, TensorDataset = _import_torch()
 
     x_train, y_train, x_test, y_test = load_fashion_mnist_tensors(root=root)
+
+    # Day 4 runs several experiments, so optional subset limits help keep
+    # the whole experiment suite practical on CPU-only machines.
+    if train_limit is not None and train_limit < len(x_train):
+        generator = torch.Generator().manual_seed(subset_seed)
+        indices = torch.randperm(len(x_train), generator=generator)[:train_limit]
+        x_train = x_train[indices]
+        y_train = y_train[indices]
+
+    if test_limit is not None and test_limit < len(x_test):
+        generator = torch.Generator().manual_seed(subset_seed + 1)
+        indices = torch.randperm(len(x_test), generator=generator)[:test_limit]
+        x_test = x_test[indices]
+        y_test = y_test[indices]
 
     train_dataset = TensorDataset(x_train, y_train)
     test_dataset = TensorDataset(x_test, y_test)

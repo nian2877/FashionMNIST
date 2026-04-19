@@ -1,0 +1,38 @@
+{
+  "config": {
+    "dataset_root": "data/transfer_real",
+    "output_root": "results",
+    "image_size": 224,
+    "batch_size": 16,
+    "frozen_epochs": 2,
+    "finetune_epochs": 2,
+    "head_learning_rate": 0.001,
+    "finetune_learning_rate": 0.0003,
+    "dropout": 0.3,
+    "random_seed": 42,
+    "backbone_name": "torchvision_resnet18",
+    "use_pretrained_weights": true,
+    "pretrained_checkpoint": null,
+    "error_example_count": 12
+  },
+  "dataset_root": "data/transfer_real",
+  "class_names": [
+    "Bag",
+    "Sneaker"
+  ],
+  "source_backbone": "torchvision.models.resnet18(ResNet18_Weights.DEFAULT)",
+  "final_metrics": {
+    "train_loss": 0.028722481181224186,
+    "train_acc": 1.0,
+    "val_loss": 0.05570480227470398,
+    "val_acc": 1.0,
+    "parameters": 11177538
+  },
+  "artifacts": {
+    "history_json": "results\\day5_transfer\\transfer_history.json",
+    "weights_path": "results\\day5_transfer\\transfer_weights.pt",
+    "curves_png": "results\\day5_transfer\\transfer_curves.png",
+    "misclassified_json": "results\\day5_transfer\\misclassified_examples.json",
+    "misclassified_png": null
+  }
+}

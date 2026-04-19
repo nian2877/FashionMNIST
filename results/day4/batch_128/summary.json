@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "batch_128",
+    "category": "batch_size",
+    "learning_rate": 0.001,
+    "batch_size": 128,
+    "dropout": 0.0,
+    "epochs": 3,
+    "note": "Larger batch gives smoother gradients but fewer updates per epoch."
+  },
+  "final_metrics": {
+    "train_loss": 0.4858849308490753,
+    "train_acc": 0.8194166666666667,
+    "test_loss": 0.4895381052494049,
+    "test_acc": 0.8355,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\batch_128\\history.json",
+    "curves_png": "results\\day4\\batch_128\\curves.png",
+    "weights_path": "results\\day4\\batch_128\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\batch_128\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\batch_128\\misclassified_examples.png"
+  }
+}

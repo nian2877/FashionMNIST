@@ -1,9 +1,21 @@
-"""Day 3 training script: FashionMNIST with both MLP and CNN experiments."""
+"""Day 4 experiment script: hyperparameter comparison and error analysis.
+
+Day 3 introduced CNN.
+Day 4 asks a deeper question:
+"How do learning rate, batch size, and dropout affect the model?"
+
+This file runs a small but complete experiment suite and saves:
+- per-epoch histories
+- training curves
+- model weights
+- misclassified sample images
+- an overall summary JSON
+"""
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from dataset import (
@@ -16,16 +28,30 @@ from dataset import (
 
 @dataclass(frozen=True)
 class TrainingConfig:
-    """Configuration values used in the Day 3 training run."""
+    """Global configuration for the Day 4 experiment suite."""
 
     data_root: str = "data"
     output_root: str = "results"
-    batch_size: int = 64
-    epochs: int = 5
-    learning_rate: float = 0.001
+    epochs: int = 3
+    train_limit: int | None = 12000
+    test_limit: int | None = 2000
     mlp_hidden_dim: int = 256
-    run_baseline_mlp: bool = True
     random_seed: int = 42
+    error_example_count: int = 12
+    experiment_names: tuple[str, ...] | None = None
+
+
+@dataclass(frozen=True)
+class ExperimentSpec:
+    """One experiment in the Day 4 comparison suite."""
+
+    name: str
+    category: str
+    learning_rate: float
+    batch_size: int
+    dropout: float
+    epochs: int
+    note: str
 
 
 def _import_torch():
@@ -41,9 +67,91 @@ def _import_torch():
     return torch, nn
 
 
+def _import_plotting():
+    """Import matplotlib lazily because plotting is only needed for analysis outputs."""
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise RuntimeError(
+            "matplotlib is required for Day 4 plots. Please install matplotlib."
+        ) from exc
+    return plt
+
+
 def count_parameters(model) -> int:
     """Count the total number of trainable parameters."""
     return sum(parameter.numel() for parameter in model.parameters())
+
+
+def get_experiment_suite(config: TrainingConfig) -> list[ExperimentSpec]:
+    """Build the default Day 4 experiment suite."""
+    experiments = [
+        ExperimentSpec(
+            name="baseline",
+            category="baseline",
+            learning_rate=0.001,
+            batch_size=64,
+            dropout=0.0,
+            epochs=config.epochs,
+            note="Baseline CNN configuration used as the reference point.",
+        ),
+        ExperimentSpec(
+            name="lr_low",
+            category="learning_rate",
+            learning_rate=0.0003,
+            batch_size=64,
+            dropout=0.0,
+            epochs=config.epochs,
+            note="Lower learning rate usually learns more slowly but can be stable.",
+        ),
+        ExperimentSpec(
+            name="lr_high",
+            category="learning_rate",
+            learning_rate=0.003,
+            batch_size=64,
+            dropout=0.0,
+            epochs=config.epochs,
+            note="Higher learning rate may learn faster but can overshoot.",
+        ),
+        ExperimentSpec(
+            name="batch_32",
+            category="batch_size",
+            learning_rate=0.001,
+            batch_size=32,
+            dropout=0.0,
+            epochs=config.epochs,
+            note="Smaller batch gives noisier gradients and more updates per epoch.",
+        ),
+        ExperimentSpec(
+            name="batch_128",
+            category="batch_size",
+            learning_rate=0.001,
+            batch_size=128,
+            dropout=0.0,
+            epochs=config.epochs,
+            note="Larger batch gives smoother gradients but fewer updates per epoch.",
+        ),
+        ExperimentSpec(
+            name="dropout_30",
+            category="dropout",
+            learning_rate=0.001,
+            batch_size=64,
+            dropout=0.3,
+            epochs=config.epochs,
+            note="Dropout removes part of the hidden activations during training.",
+        ),
+    ]
+
+    if config.experiment_names is None:
+        return experiments
+
+    wanted = set(config.experiment_names)
+    filtered = [experiment for experiment in experiments if experiment.name in wanted]
+    if not filtered:
+        raise ValueError(
+            f"No experiments matched config.experiment_names={config.experiment_names!r}."
+        )
+    return filtered
 
 
 def train_one_epoch(model, dataloader, criterion, optimizer, device) -> tuple[float, float]:
@@ -54,21 +162,14 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device) -> tuple[fl
     total_examples = 0
 
     for images, labels in dataloader:
-        # Move tensors to CPU or GPU.
         images = images.to(device)
         labels = labels.to(device)
 
-        # Forward pass: let the model predict logits for each class.
         logits = model(images)
         loss = criterion(logits, labels)
 
-        # Clear old gradients before computing new ones.
         optimizer.zero_grad()
-
-        # Backpropagation: compute gradients for every trainable parameter.
         loss.backward()
-
-        # Update parameters using the gradients we just computed.
         optimizer.step()
 
         total_loss += loss.item() * labels.size(0)
@@ -107,96 +208,224 @@ def evaluate(model, dataloader, criterion, device) -> tuple[float, float]:
     return avg_loss, accuracy
 
 
-def print_dataset_overview(
-    train_loader,
-    test_loader,
-    model,
-    device,
-    config: TrainingConfig,
-    model_name: str,
-) -> None:
-    """Print shapes and metadata so beginners can see what flows through the code."""
-    sample_images, sample_labels = next(iter(train_loader))
-    sample_logits = model(sample_images.to(device)).cpu()
-
-    print(f"=== Day 3: FashionMNIST training ({model_name.upper()}) ===")
-    print(f"Device:            {device}")
-    print(f"Train samples:     {len(train_loader.dataset)}")
-    print(f"Test samples:      {len(test_loader.dataset)}")
-    print(f"Batch size:        {config.batch_size}")
-    print(f"Epochs:            {config.epochs}")
-    print(f"Learning rate:     {config.learning_rate}")
-    print(f"Image batch shape: {tuple(sample_images.shape)}")
-    print(f"Label batch shape: {tuple(sample_labels.shape)}")
-    print(f"Logits shape:      {tuple(sample_logits.shape)}")
-    print(f"Model parameters:  {count_parameters(model)}")
-    print()
-    print("Class index mapping:")
-    for index, class_name in enumerate(CLASS_NAMES):
-        print(f"{index}: {class_name}")
-    print()
-
-
 def create_output_dir(config: TrainingConfig) -> Path:
-    """Create the directory that will store training artifacts."""
-    output_dir = Path(config.output_root) / "day3"
+    """Create the directory that will store Day 4 artifacts."""
+    output_dir = Path(config.output_root) / "day4"
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
 
-def save_history(output_dir: Path, model_name: str, history: list[dict]) -> Path:
-    """Save epoch-by-epoch metrics to a JSON file."""
-    history_path = output_dir / f"{model_name}_history.json"
-    history_path.write_text(
-        json.dumps(history, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    return history_path
+def create_experiment_dir(output_dir: Path, experiment: ExperimentSpec) -> Path:
+    """Create one subdirectory per experiment."""
+    experiment_dir = output_dir / experiment.name
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+    return experiment_dir
 
 
-def save_summary(output_dir: Path, summary: dict) -> Path:
-    """Save a concise summary of the whole Day 3 experiment."""
-    summary_path = output_dir / "day3_summary.json"
-    summary_path.write_text(
-        json.dumps(summary, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    return summary_path
-
-
-def train_single_model(
-    model_name: str,
-    config: TrainingConfig,
+def print_experiment_intro(
     train_loader,
     test_loader,
+    model,
     device,
-):
-    """Train one model and return its metrics history plus the trained model."""
+    experiment: ExperimentSpec,
+    config: TrainingConfig,
+) -> None:
+    """Print experiment settings and a quick tensor-shape overview."""
+    sample_images, sample_labels = next(iter(train_loader))
+    sample_logits = model(sample_images.to(device)).cpu()
+
+    print(f"=== Day 4 Experiment: {experiment.name} ===")
+    print(f"Category:          {experiment.category}")
+    print(f"Note:              {experiment.note}")
+    print(f"Device:            {device}")
+    print(f"Train samples:     {len(train_loader.dataset)}")
+    print(f"Test samples:      {len(test_loader.dataset)}")
+    print(f"Batch size:        {experiment.batch_size}")
+    print(f"Epochs:            {experiment.epochs}")
+    print(f"Learning rate:     {experiment.learning_rate}")
+    print(f"Dropout:           {experiment.dropout}")
+    print(f"Image batch shape: {tuple(sample_images.shape)}")
+    print(f"Label batch shape: {tuple(sample_labels.shape)}")
+    print(f"Logits shape:      {tuple(sample_logits.shape)}")
+    print(f"Model parameters:  {count_parameters(model)}")
+    print(f"Subset train/test: {config.train_limit} / {config.test_limit}")
+    print()
+
+
+def save_json(path: Path, data: dict | list) -> Path:
+    """Save a dict or list as readable JSON."""
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return path
+
+
+def save_history_plot(experiment_dir: Path, history: list[dict], title: str) -> Path:
+    """Save loss/accuracy curves for one experiment."""
+    plt = _import_plotting()
+
+    epochs = [record["epoch"] for record in history]
+    train_loss = [record["train_loss"] for record in history]
+    test_loss = [record["test_loss"] for record in history]
+    train_acc = [record["train_acc"] for record in history]
+    test_acc = [record["test_acc"] for record in history]
+
+    figure, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+
+    axes[0].plot(epochs, train_loss, marker="o", label="train_loss")
+    axes[0].plot(epochs, test_loss, marker="o", label="test_loss")
+    axes[0].set_title(f"{title} Loss")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
+    axes[0].legend()
+
+    axes[1].plot(epochs, train_acc, marker="o", label="train_acc")
+    axes[1].plot(epochs, test_acc, marker="o", label="test_acc")
+    axes[1].set_title(f"{title} Accuracy")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("Accuracy")
+    axes[1].legend()
+
+    figure.tight_layout()
+    plot_path = experiment_dir / "curves.png"
+    figure.savefig(plot_path, dpi=150)
+    plt.close(figure)
+    return plot_path
+
+
+def collect_misclassified_examples(model, dataloader, device, max_examples: int) -> list[dict]:
+    """Collect a few wrong predictions for qualitative analysis."""
+    torch, _ = _import_torch()
+    model.eval()
+    examples = []
+
+    with torch.no_grad():
+        for images, labels in dataloader:
+            logits = model(images.to(device))
+            probabilities = torch.softmax(logits, dim=1).cpu()
+            predictions = probabilities.argmax(dim=1)
+
+            mismatches = predictions != labels
+            if mismatches.any():
+                mismatch_indices = mismatches.nonzero(as_tuple=False).flatten().tolist()
+                for index in mismatch_indices:
+                    examples.append(
+                        {
+                            "image": images[index].cpu(),
+                            "true_label": int(labels[index].item()),
+                            "pred_label": int(predictions[index].item()),
+                            "confidence": float(probabilities[index, predictions[index]].item()),
+                        }
+                    )
+                    if len(examples) >= max_examples:
+                        return examples
+
+    return examples
+
+
+def save_error_samples_plot(experiment_dir: Path, examples: list[dict], title: str) -> Path | None:
+    """Plot several misclassified images with true/predicted labels."""
+    if not examples:
+        return None
+
+    plt = _import_plotting()
+    columns = 4
+    rows = (len(examples) + columns - 1) // columns
+    figure, axes = plt.subplots(rows, columns, figsize=(12, 3 * rows))
+
+    if rows == 1:
+        axes = [axes]
+
+    flat_axes = []
+    for row_axes in axes:
+        if isinstance(row_axes, (list, tuple)):
+            flat_axes.extend(row_axes)
+        else:
+            flat_axes.extend(row_axes.tolist())
+
+    for axis, example in zip(flat_axes, examples):
+        image = example["image"].squeeze(0).numpy()
+        true_name = CLASS_NAMES[example["true_label"]]
+        pred_name = CLASS_NAMES[example["pred_label"]]
+        axis.imshow(image, cmap="gray")
+        axis.set_title(
+            f"T: {true_name}\nP: {pred_name}\nConf: {example['confidence']:.2f}",
+            fontsize=9,
+        )
+        axis.axis("off")
+
+    for axis in flat_axes[len(examples):]:
+        axis.axis("off")
+
+    figure.suptitle(title)
+    figure.tight_layout()
+    plot_path = experiment_dir / "misclassified_examples.png"
+    figure.savefig(plot_path, dpi=150)
+    plt.close(figure)
+    return plot_path
+
+
+def save_experiment_comparison_plot(output_dir: Path, summary: dict) -> Path:
+    """Plot test accuracy comparison across all Day 4 experiments."""
+    plt = _import_plotting()
+
+    names = list(summary["experiments"].keys())
+    accuracies = [
+        summary["experiments"][name]["final_metrics"]["test_acc"] for name in names
+    ]
+
+    figure, axis = plt.subplots(figsize=(10, 5))
+    axis.bar(names, accuracies)
+    axis.set_title("Day 4 Experiment Comparison (Test Accuracy)")
+    axis.set_xlabel("Experiment")
+    axis.set_ylabel("Test Accuracy")
+    axis.set_ylim(0.0, 1.0)
+    axis.tick_params(axis="x", rotation=30)
+
+    for index, accuracy in enumerate(accuracies):
+        axis.text(index, accuracy + 0.01, f"{accuracy:.2%}", ha="center")
+
+    figure.tight_layout()
+    plot_path = output_dir / "comparison_test_accuracy.png"
+    figure.savefig(plot_path, dpi=150)
+    plt.close(figure)
+    return plot_path
+
+
+def train_experiment(
+    experiment: ExperimentSpec,
+    config: TrainingConfig,
+    device,
+    output_dir: Path,
+) -> dict:
+    """Train one CNN experiment and save all of its artifacts."""
     torch, nn = _import_torch()
     from model import build_model
 
-    # Reset the seed before each experiment so the comparison is more fair.
     torch.manual_seed(config.random_seed)
 
+    train_loader, test_loader = make_fashion_mnist_dataloaders(
+        batch_size=experiment.batch_size,
+        root=config.data_root,
+        train_limit=config.train_limit,
+        test_limit=config.test_limit,
+        subset_seed=config.random_seed,
+    )
+
     model = build_model(
-        model_name=model_name,
+        model_name="cnn",
         hidden_dim=config.mlp_hidden_dim,
+        dropout=experiment.dropout,
     ).to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=experiment.learning_rate)
 
-    print_dataset_overview(train_loader, test_loader, model, device, config, model_name)
-    print("Training loop reminder:")
-    print("1. Read one batch of images and labels from the DataLoader")
-    print("2. Send images through the model to get logits")
-    print("3. Use CrossEntropyLoss to compare logits and labels")
-    print("4. optimizer.zero_grad() clears old gradients")
-    print("5. loss.backward() computes new gradients")
-    print("6. optimizer.step() updates the parameters")
-    print()
+    experiment_dir = create_experiment_dir(output_dir, experiment)
+    print_experiment_intro(train_loader, test_loader, model, device, experiment, config)
 
     history = []
-    for epoch in range(1, config.epochs + 1):
+    for epoch in range(1, experiment.epochs + 1):
         train_loss, train_acc = train_one_epoch(
             model=model,
             dataloader=train_loader,
@@ -210,121 +439,150 @@ def train_single_model(
             criterion=criterion,
             device=device,
         )
-        epoch_record = {
+
+        record = {
             "epoch": epoch,
             "train_loss": train_loss,
             "train_acc": train_acc,
             "test_loss": test_loss,
             "test_acc": test_acc,
         }
-        history.append(epoch_record)
+        history.append(record)
         print(
             f"Epoch {epoch:02d} | "
             f"train_loss={train_loss:.4f} train_acc={train_acc:.2%} | "
             f"test_loss={test_loss:.4f} test_acc={test_acc:.2%}"
         )
 
-    print()
-    print(f"{model_name.upper()} training finished.")
-    return model, history
-
-
-def save_model_weights(output_dir: Path, model_name: str, model) -> Path:
-    """Save the trained model parameters."""
-    torch, _ = _import_torch()
-    model_path = output_dir / f"{model_name}_weights.pt"
-    torch.save(model.state_dict(), model_path)
-    return model_path
-
-
-def print_comparison_report(summary: dict) -> None:
-    """Print a short teaching-oriented comparison between MLP and CNN."""
-    print("=== Comparison Summary ===")
-    for model_name, metrics in summary["final_metrics"].items():
-        print(
-            f"{model_name.upper():>4} | "
-            f"train_acc={metrics['train_acc']:.2%} | "
-            f"test_acc={metrics['test_acc']:.2%} | "
-            f"parameters={metrics['parameters']}"
-        )
-
-    if "mlp" in summary["final_metrics"] and "cnn" in summary["final_metrics"]:
-        gap = (
-            summary["final_metrics"]["cnn"]["test_acc"]
-            - summary["final_metrics"]["mlp"]["test_acc"]
-        )
-        print(f"CNN - MLP test accuracy gap: {gap:.2%}")
-    print()
-
-
-def run_training(config: TrainingConfig | None = None) -> None:
-    """Run the Day 3 experiment.
-
-    By default we train:
-    - an MLP baseline from Day 2
-    - a CNN from Day 3
-
-    This makes it easier to see why CNN is better suited for images.
-    """
-    config = config or TrainingConfig()
-    torch, _ = _import_torch()
-
-    torch.manual_seed(config.random_seed)
-
-    # Use GPU if available. CPU is also completely fine for FashionMNIST.
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    train_loader, test_loader = make_fashion_mnist_dataloaders(
-        batch_size=config.batch_size,
-        root=config.data_root,
+    errors = collect_misclassified_examples(
+        model=model,
+        dataloader=test_loader,
+        device=device,
+        max_examples=config.error_example_count,
     )
 
-    model_order = []
-    if config.run_baseline_mlp:
-        model_order.append("mlp")
-    model_order.append("cnn")
+    history_json = save_json(experiment_dir / "history.json", history)
+    errors_json = save_json(
+        experiment_dir / "misclassified_examples.json",
+        [
+            {
+                "true_label": example["true_label"],
+                "true_name": CLASS_NAMES[example["true_label"]],
+                "pred_label": example["pred_label"],
+                "pred_name": CLASS_NAMES[example["pred_label"]],
+                "confidence": example["confidence"],
+            }
+            for example in errors
+        ],
+    )
+    curve_plot = save_history_plot(
+        experiment_dir=experiment_dir,
+        history=history,
+        title=experiment.name,
+    )
+    error_plot = save_error_samples_plot(
+        experiment_dir=experiment_dir,
+        examples=errors,
+        title=f"Misclassified Samples - {experiment.name}",
+    )
+    weights_path = experiment_dir / "cnn_weights.pt"
+    torch.save(model.state_dict(), weights_path)
 
-    output_dir = create_output_dir(config)
-    summary = {
-        "config": {
-            "batch_size": config.batch_size,
-            "epochs": config.epochs,
-            "learning_rate": config.learning_rate,
-            "mlp_hidden_dim": config.mlp_hidden_dim,
-            "run_baseline_mlp": config.run_baseline_mlp,
-        },
-        "final_metrics": {},
-        "artifacts": {},
-    }
-
-    for model_name in model_order:
-        model, history = train_single_model(
-            model_name=model_name,
-            config=config,
-            train_loader=train_loader,
-            test_loader=test_loader,
-            device=device,
-        )
-        history_path = save_history(output_dir, model_name, history)
-        weight_path = save_model_weights(output_dir, model_name, model)
-        final_epoch = history[-1]
-
-        summary["final_metrics"][model_name] = {
+    final_epoch = history[-1]
+    experiment_summary = {
+        "spec": asdict(experiment),
+        "final_metrics": {
             "train_loss": final_epoch["train_loss"],
             "train_acc": final_epoch["train_acc"],
             "test_loss": final_epoch["test_loss"],
             "test_acc": final_epoch["test_acc"],
             "parameters": count_parameters(model),
-        }
-        summary["artifacts"][model_name] = {
-            "history_json": str(history_path),
-            "weights_path": str(weight_path),
-        }
+        },
+        "artifacts": {
+            "history_json": str(history_json),
+            "curves_png": str(curve_plot),
+            "weights_path": str(weights_path),
+            "misclassified_json": str(errors_json),
+            "misclassified_png": str(error_plot) if error_plot is not None else None,
+        },
+    }
+    save_json(experiment_dir / "summary.json", experiment_summary)
 
-    summary_path = save_summary(output_dir, summary)
+    print()
+    print(f"Experiment {experiment.name} finished.")
+    print()
+    return experiment_summary
 
-    print_comparison_report(summary)
-    print("Training finished.")
+
+def print_day4_summary(summary: dict) -> None:
+    """Print a compact comparison table for all experiments."""
+    print("=== Day 4 Comparison Summary ===")
+    ranking = sorted(
+        summary["experiments"].items(),
+        key=lambda item: item[1]["final_metrics"]["test_acc"],
+        reverse=True,
+    )
+    for name, record in ranking:
+        metrics = record["final_metrics"]
+        spec = record["spec"]
+        print(
+            f"{name:>10} | "
+            f"category={spec['category']:<13} | "
+            f"lr={spec['learning_rate']:<7g} | "
+            f"batch={spec['batch_size']:<3d} | "
+            f"dropout={spec['dropout']:<4.1f} | "
+            f"test_acc={metrics['test_acc']:.2%}"
+        )
+    print()
+    print(f"Best experiment: {summary['best_experiment']}")
+    print()
+
+
+def run_training(config: TrainingConfig | None = None) -> None:
+    """Run the Day 4 experiment suite.
+
+    Day 4 is no longer just one training run.
+    It is an experiment-and-analysis stage where we compare:
+    - learning rate
+    - batch size
+    - dropout
+    """
+    config = config or TrainingConfig()
+    torch, _ = _import_torch()
+
+    torch.manual_seed(config.random_seed)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    output_dir = create_output_dir(config)
+    experiments = get_experiment_suite(config)
+
+    summary = {
+        "config": asdict(config),
+        "experiments": {},
+        "best_experiment": None,
+        "artifacts": {},
+    }
+
+    for experiment in experiments:
+        experiment_summary = train_experiment(
+            experiment=experiment,
+            config=config,
+            device=device,
+            output_dir=output_dir,
+        )
+        summary["experiments"][experiment.name] = experiment_summary
+
+    best_name = max(
+        summary["experiments"],
+        key=lambda name: summary["experiments"][name]["final_metrics"]["test_acc"],
+    )
+    summary["best_experiment"] = best_name
+    comparison_plot = save_experiment_comparison_plot(output_dir, summary)
+    summary["artifacts"]["comparison_plot"] = str(comparison_plot)
+
+    summary_path = save_json(output_dir / "day4_summary.json", summary)
+    print_day4_summary(summary)
+    print("Day 4 experiments finished.")
     print(f"Results saved under: {output_dir}")
     print(f"Summary file: {summary_path}")
 

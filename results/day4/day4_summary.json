@@ -1,0 +1,169 @@
+{
+  "config": {
+    "data_root": "data",
+    "output_root": "results",
+    "epochs": 3,
+    "train_limit": 12000,
+    "test_limit": 2000,
+    "mlp_hidden_dim": 256,
+    "random_seed": 42,
+    "error_example_count": 12,
+    "experiment_names": null
+  },
+  "experiments": {
+    "baseline": {
+      "spec": {
+        "name": "baseline",
+        "category": "baseline",
+        "learning_rate": 0.001,
+        "batch_size": 64,
+        "dropout": 0.0,
+        "epochs": 3,
+        "note": "Baseline CNN configuration used as the reference point."
+      },
+      "final_metrics": {
+        "train_loss": 0.4375131437778473,
+        "train_acc": 0.84,
+        "test_loss": 0.4499375723600388,
+        "test_acc": 0.838,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\baseline\\history.json",
+        "curves_png": "results\\day4\\baseline\\curves.png",
+        "weights_path": "results\\day4\\baseline\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\baseline\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\baseline\\misclassified_examples.png"
+      }
+    },
+    "lr_low": {
+      "spec": {
+        "name": "lr_low",
+        "category": "learning_rate",
+        "learning_rate": 0.0003,
+        "batch_size": 64,
+        "dropout": 0.0,
+        "epochs": 3,
+        "note": "Lower learning rate usually learns more slowly but can be stable."
+      },
+      "final_metrics": {
+        "train_loss": 0.5500594919522603,
+        "train_acc": 0.7949166666666667,
+        "test_loss": 0.5625051801204681,
+        "test_acc": 0.792,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\lr_low\\history.json",
+        "curves_png": "results\\day4\\lr_low\\curves.png",
+        "weights_path": "results\\day4\\lr_low\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\lr_low\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\lr_low\\misclassified_examples.png"
+      }
+    },
+    "lr_high": {
+      "spec": {
+        "name": "lr_high",
+        "category": "learning_rate",
+        "learning_rate": 0.003,
+        "batch_size": 64,
+        "dropout": 0.0,
+        "epochs": 3,
+        "note": "Higher learning rate may learn faster but can overshoot."
+      },
+      "final_metrics": {
+        "train_loss": 0.35824387311935424,
+        "train_acc": 0.8676666666666667,
+        "test_loss": 0.36206671059131623,
+        "test_acc": 0.864,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\lr_high\\history.json",
+        "curves_png": "results\\day4\\lr_high\\curves.png",
+        "weights_path": "results\\day4\\lr_high\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\lr_high\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\lr_high\\misclassified_examples.png"
+      }
+    },
+    "batch_32": {
+      "spec": {
+        "name": "batch_32",
+        "category": "batch_size",
+        "learning_rate": 0.001,
+        "batch_size": 32,
+        "dropout": 0.0,
+        "epochs": 3,
+        "note": "Smaller batch gives noisier gradients and more updates per epoch."
+      },
+      "final_metrics": {
+        "train_loss": 0.3970869212547938,
+        "train_acc": 0.8515,
+        "test_loss": 0.3944316293001175,
+        "test_acc": 0.856,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\batch_32\\history.json",
+        "curves_png": "results\\day4\\batch_32\\curves.png",
+        "weights_path": "results\\day4\\batch_32\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\batch_32\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\batch_32\\misclassified_examples.png"
+      }
+    },
+    "batch_128": {
+      "spec": {
+        "name": "batch_128",
+        "category": "batch_size",
+        "learning_rate": 0.001,
+        "batch_size": 128,
+        "dropout": 0.0,
+        "epochs": 3,
+        "note": "Larger batch gives smoother gradients but fewer updates per epoch."
+      },
+      "final_metrics": {
+        "train_loss": 0.4858849308490753,
+        "train_acc": 0.8194166666666667,
+        "test_loss": 0.4895381052494049,
+        "test_acc": 0.8355,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\batch_128\\history.json",
+        "curves_png": "results\\day4\\batch_128\\curves.png",
+        "weights_path": "results\\day4\\batch_128\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\batch_128\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\batch_128\\misclassified_examples.png"
+      }
+    },
+    "dropout_30": {
+      "spec": {
+        "name": "dropout_30",
+        "category": "dropout",
+        "learning_rate": 0.001,
+        "batch_size": 64,
+        "dropout": 0.3,
+        "epochs": 3,
+        "note": "Dropout removes part of the hidden activations during training."
+      },
+      "final_metrics": {
+        "train_loss": 0.5076013301213582,
+        "train_acc": 0.8103333333333333,
+        "test_loss": 0.45905538463592527,
+        "test_acc": 0.8275,
+        "parameters": 206922
+      },
+      "artifacts": {
+        "history_json": "results\\day4\\dropout_30\\history.json",
+        "curves_png": "results\\day4\\dropout_30\\curves.png",
+        "weights_path": "results\\day4\\dropout_30\\cnn_weights.pt",
+        "misclassified_json": "results\\day4\\dropout_30\\misclassified_examples.json",
+        "misclassified_png": "results\\day4\\dropout_30\\misclassified_examples.png"
+      }
+    }
+  },
+  "best_experiment": "lr_high",
+  "artifacts": {
+    "comparison_plot": "results\\day4\\comparison_test_accuracy.png"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "lr_low",
+    "category": "learning_rate",
+    "learning_rate": 0.0003,
+    "batch_size": 64,
+    "dropout": 0.0,
+    "epochs": 3,
+    "note": "Lower learning rate usually learns more slowly but can be stable."
+  },
+  "final_metrics": {
+    "train_loss": 0.5500594919522603,
+    "train_acc": 0.7949166666666667,
+    "test_loss": 0.5625051801204681,
+    "test_acc": 0.792,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\lr_low\\history.json",
+    "curves_png": "results\\day4\\lr_low\\curves.png",
+    "weights_path": "results\\day4\\lr_low\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\lr_low\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\lr_low\\misclassified_examples.png"
+  }
+}

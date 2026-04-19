@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "dropout_30",
+    "category": "dropout",
+    "learning_rate": 0.001,
+    "batch_size": 64,
+    "dropout": 0.3,
+    "epochs": 3,
+    "note": "Dropout removes part of the hidden activations during training."
+  },
+  "final_metrics": {
+    "train_loss": 0.5076013301213582,
+    "train_acc": 0.8103333333333333,
+    "test_loss": 0.45905538463592527,
+    "test_acc": 0.8275,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\dropout_30\\history.json",
+    "curves_png": "results\\day4\\dropout_30\\curves.png",
+    "weights_path": "results\\day4\\dropout_30\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\dropout_30\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\dropout_30\\misclassified_examples.png"
+  }
+}

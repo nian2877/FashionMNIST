@@ -1,0 +1,86 @@
+[
+  {
+    "true_label": 6,
+    "true_name": "Shirt",
+    "pred_label": 4,
+    "pred_name": "Coat",
+    "confidence": 0.5247318744659424
+  },
+  {
+    "true_label": 6,
+    "true_name": "Shirt",
+    "pred_label": 2,
+    "pred_name": "Pullover",
+    "confidence": 0.562458872795105
+  },
+  {
+    "true_label": 6,
+    "true_name": "Shirt",
+    "pred_label": 0,
+    "pred_name": "T-shirt/top",
+    "confidence": 0.6713165640830994
+  },
+  {
+    "true_label": 7,
+    "true_name": "Sneaker",
+    "pred_label": 5,
+    "pred_name": "Sandal",
+    "confidence": 0.45262065529823303
+  },
+  {
+    "true_label": 0,
+    "true_name": "T-shirt/top",
+    "pred_label": 3,
+    "pred_name": "Dress",
+    "confidence": 0.7312344908714294
+  },
+  {
+    "true_label": 6,
+    "true_name": "Shirt",
+    "pred_label": 0,
+    "pred_name": "T-shirt/top",
+    "confidence": 0.5418635606765747
+  },
+  {
+    "true_label": 6,
+    "true_name": "Shirt",
+    "pred_label": 0,
+    "pred_name": "T-shirt/top",
+    "confidence": 0.4870554208755493
+  },
+  {
+    "true_label": 2,
+    "true_name": "Pullover",
+    "pred_label": 4,
+    "pred_name": "Coat",
+    "confidence": 0.48879140615463257
+  },
+  {
+    "true_label": 4,
+    "true_name": "Coat",
+    "pred_label": 6,
+    "pred_name": "Shirt",
+    "confidence": 0.4743773341178894
+  },
+  {
+    "true_label": 4,
+    "true_name": "Coat",
+    "pred_label": 3,
+    "pred_name": "Dress",
+    "confidence": 0.4038977026939392
+  },
+  {
+    "true_label": 3,
+    "true_name": "Dress",
+    "pred_label": 6,
+    "pred_name": "Shirt",
+    "confidence": 0.48031461238861084
+  },
+  {
+    "true_label": 4,
+    "true_name": "Coat",
+    "pred_label": 6,
+    "pred_name": "Shirt",
+    "confidence": 0.4416428208351135
+  }
+]

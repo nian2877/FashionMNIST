@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "batch_32",
+    "category": "batch_size",
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "dropout": 0.0,
+    "epochs": 3,
+    "note": "Smaller batch gives noisier gradients and more updates per epoch."
+  },
+  "final_metrics": {
+    "train_loss": 0.3970869212547938,
+    "train_acc": 0.8515,
+    "test_loss": 0.3944316293001175,
+    "test_acc": 0.856,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\batch_32\\history.json",
+    "curves_png": "results\\day4\\batch_32\\curves.png",
+    "weights_path": "results\\day4\\batch_32\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\batch_32\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\batch_32\\misclassified_examples.png"
+  }
+}

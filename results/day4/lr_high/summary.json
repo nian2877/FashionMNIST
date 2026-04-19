@@ -1,0 +1,25 @@
+{
+  "spec": {
+    "name": "lr_high",
+    "category": "learning_rate",
+    "learning_rate": 0.003,
+    "batch_size": 64,
+    "dropout": 0.0,
+    "epochs": 3,
+    "note": "Higher learning rate may learn faster but can overshoot."
+  },
+  "final_metrics": {
+    "train_loss": 0.35824387311935424,
+    "train_acc": 0.8676666666666667,
+    "test_loss": 0.36206671059131623,
+    "test_acc": 0.864,
+    "parameters": 206922
+  },
+  "artifacts": {
+    "history_json": "results\\day4\\lr_high\\history.json",
+    "curves_png": "results\\day4\\lr_high\\curves.png",
+    "weights_path": "results\\day4\\lr_high\\cnn_weights.pt",
+    "misclassified_json": "results\\day4\\lr_high\\misclassified_examples.json",
+    "misclassified_png": "results\\day4\\lr_high\\misclassified_examples.png"
+  }
+}
